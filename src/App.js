@@ -1,75 +1,119 @@
 import React, { Component } from 'react';
 import './App.css';
-
-//adding dynamic data to our app
+import TodoBanner from './TodoBanner';
+import TodoRow from './TodoRow';
+import TodoCreator from './TodoCreator';
+import VisibilityControl from './VisibilityControl';
 
 export default class App extends Component {
   constructor(props){
     super(props);
     this.state={
       userName : "kamrani",
-      course : "Zero to Hero",
-      data : "09385724...",
-      todoItem :[{ action : "plan1", done :false},
-                  {action : "plan2", done :true},
-                  {action : "plan3", done :false},
-                  {action : "plan4", done :true},],
-      newItemText : ""            
-    }
+      todoItem :[{ action : "buy flower for my self", done :false},
+                  {action : "read book", done :true},
+                  {action : "go to the gym", done :false},
+                  {action : "teach react", done :true},],
+      showCompleted :true            
+            }
   }
 updateNewValue =(event) =>
 {
   this.setState({ newItemText :  event.target.value});
 }  
 
-createNewToDo =() =>
-{
-  if(!this.state.todoItem
-          .find(item => item.action === this.state.newItemText))
-          {
-            this.setState({
+createNewToDo =(task) =>
+{  if(!this.state.todoItem
+          .find(item => item.action === task))
+          {this.setState({
               todoItem : [...this.state.todoItem,
-                        {action: this.state.newItemText,
-                        done: false}],
-                        newItemText : ""
-            });
-          }
+                        {action: task,
+                        done: false}]},
+         //keep data to show every time
+  ()=> localStorage.setItem("todos",
+        JSON.stringify(this.state))); 
+                        
+         }
 }
+  toggletodo =(todo) => this.setState
+  ({todoItem : this.state.todoItem.map
+    (item =>item.action ===todo.action ?
+      {...item, done: !item.done} :item) });
 
-changeStateDate =() =>
+  todoTableRows=(doneValue) => this.state.todoItem
+  .filter(item => item.done === doneValue)
+  .map
+    (item =>
+    <TodoRow key={item.action} item={item}
+    callback={this.toggletodo}/>
+    );
+  
+  
+  //load /Get the kept data
+  componentDidMount =() =>
   {
-    this.setState(
-      {userName : this.state.userName == "kamrani" ? "paria" : "kamrani"}
-    )
+    let data =localStorage.getItem("todos");
+    this.setState(data!=null ? JSON.parse(data):
+    {
+      userName : "kamrani",
+      todoItem :[{ action : "buy flower for my self", done :false},
+                  {action : "read book", done :true},
+                  {action : "go to the gym", done :false},
+                  {action : "teach react", done :true},],
+      showCompleted :true    
+    });
   }
     render() {
       return( 
         <div>
-          <h4 className="bg-primary text-white text-center p-2">
-            Hello world APP
-          </h4>
-          <h4 className="bg-primary text-white text-center">
-             {this.state.userName} React {this.state.course} & this is her number {this.state.data}
-          </h4>
-          <button className="btn btn-danger m-2 " onClick={this.changeStateDate}>
-            click me
-          </button>
-          <h4 className="bg-primary text-white text-center p-2">
-            {this.state.userName} to do list
-            ({this.state.todoItem.filter(t=> !t.done).length}) item to do          </h4>
-          <div className="container-fludi">
-              <div className="m-1">
-                  <input className="form"
-                          value={this.state.newItemText}
-                          onChange={this.updateNewValue}/> 
-                  <button className="btn btn-info mt-1"
-                          onClick={this.createNewToDo}>
-                  Add new task
-                  </button>        
+          {/*first mode to show without props
+           <h4 className="bg-primary text-white text-center p-2"> 
+             {this.state.userName} you have
+            ({this.state.todoItem.filter(t=> t.done === false).length}) item to do
+          </h4> */}
+          {/*secend model to show s.t with props*/}
+          <TodoBanner name={this.state.userName}
+                      task={this.state.todoItem}/> 
+
+              <TodoCreator callback={this.createNewToDo}/>
+              <table className="table table-striped table-borderd">
+                <thead>
+                  <th>
+                    To Do Task Name 
+                  </th>
+                  <th>
+                    Done
+                  </th>
+                </thead>
+                <tbody>
+                  {/*show incomplete task*/}
+                  {this.todoTableRows(false)}
+                </tbody>
+              </table>
+              <div className="bg-warning text-white text-center p-2">
+                  {/*calling child compunnent*/}
+                  <VisibilityControl description ="completed Task"
+                    ischecked={this.state.showCompleted}
+                    callback={(checked)=>
+                    this.setState({showCompleted:checked})}/>
               </div>
+              {this.state.showCompleted &&
+                <table className="table table-striped table-borderd">
+                <thead>
+                  <th>
+                    Did Task Name 
+                  </th>
+                  <th>
+                    status
+                  </th>
+                </thead>
+                <tbody>
+                  {/*show complete task*/}
+                  {this.todoTableRows(true)}
+                </tbody>
+              </table>
+              }
           </div>
-          
-        </div>
       )
     };
 }
